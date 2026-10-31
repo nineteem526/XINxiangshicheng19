@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-export function Arena({theme,hit,phase,placement}:{theme:'lava'|'digital';hit:number;phase:string;placement:{x:number;y:number;size:number}}) {
- const host=useRef<HTMLDivElement>(null); const live=useRef({theme,hit,phase,placement});live.current={theme,hit,phase,placement};
+import {disposeBoss,loadBoss} from './game/bossAsset';
+export function Arena({theme,hit,phase,placement,bossFile=null,onBossStatus,warning=0,dodged=false}:{theme:'lava'|'digital';hit:number;phase:string;placement:{x:number;y:number;size:number;rotation?:number};bossFile?:File|null;onBossStatus?:(status:string)=>void;warning?:number;dodged?:boolean}) {
+ const host=useRef<HTMLDivElement>(null); const live=useRef({theme,hit,phase,placement,onBossStatus,warning,dodged});live.current={theme,hit,phase,placement,onBossStatus,warning,dodged};const rig=useRef<{anchor:THREE.Group;placeholder:THREE.Group;model:THREE.Group|null;modelScale:number}|null>(null);
  useEffect(()=>{const el=host.current!; const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x040710,.035);
  const camera=new THREE.PerspectiveCamera(46,1,.1,100);camera.position.set(0,4.1,12);camera.lookAt(0,2,0);
  const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});renderer.setClearColor(0x000000,0);renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;el.appendChild(renderer.domElement);
@@ -10,7 +11,9 @@ export function Arena({theme,hit,phase,placement}:{theme:'lava'|'digital';hit:nu
  const grid=new THREE.GridHelper(18,24,0x20eeff,0x15223c);grid.position.y=.02;grid.visible=false;scene.add(grid);
  const anchor=new THREE.Group();scene.add(anchor);
  const boss=new THREE.Group();anchor.add(boss);boss.position.y=1.8;
+ rig.current={anchor,placeholder:boss,model:null,modelScale:1};
  const marker=new THREE.Mesh(new THREE.RingGeometry(1.5,1.58,64),new THREE.MeshBasicMaterial({color:0x42f5ff,transparent:true,opacity:.8,side:THREE.DoubleSide}));marker.rotation.x=-Math.PI/2;anchor.add(marker);
+ const shock=new THREE.Mesh(new THREE.RingGeometry(1.6,1.72,64),new THREE.MeshBasicMaterial({color:0xff4d68,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false}));shock.rotation.x=-Math.PI/2;shock.position.y=.03;anchor.add(shock);
  const shell=new THREE.Mesh(new THREE.IcosahedronGeometry(1.35,2),new THREE.MeshStandardMaterial({color:0x250d2f,metalness:.8,roughness:.3,flatShading:true}));boss.add(shell);
  const wire=new THREE.Mesh(new THREE.IcosahedronGeometry(1.42,1),new THREE.MeshBasicMaterial({color:0xff395e,wireframe:true,transparent:true,opacity:.65}));boss.add(wire);
  const eye=new THREE.Mesh(new THREE.SphereGeometry(.38,24,16),new THREE.MeshBasicMaterial({color:0xffffff}));eye.position.set(0,.12,1.22);boss.add(eye);
@@ -19,12 +22,18 @@ export function Arena({theme,hit,phase,placement}:{theme:'lava'|'digital';hit:nu
  for(let i=0;i<22;i++){const a=i*Math.PI*2/22, h=1.2+(i%5)*.65;const p=new THREE.Mesh(new THREE.BoxGeometry(.3,h,.3),new THREE.MeshStandardMaterial({color:0x141d31,emissive:0x0a3240,metalness:.8}));p.position.set(Math.sin(a)*7,h/2,Math.cos(a)*7);p.visible=false;scene.add(p);}
  const lava=new THREE.Group(),digital=new THREE.Group();scene.add(lava,digital);for(let i=0;i<8;i++){const a=i*Math.PI/4;const rock=new THREE.Mesh(new THREE.ConeGeometry(.55,2.4+(i%3),5),new THREE.MeshStandardMaterial({color:0x35101a,emissive:0x70100a,flatShading:true}));rock.position.set(Math.sin(a)*5.6,1,Math.cos(a)*5.6);lava.add(rock);const tower=new THREE.Mesh(new THREE.BoxGeometry(.65,3+(i%3)*.7,.65),new THREE.MeshStandardMaterial({color:0x09172b,emissive:0x045568,wireframe:true}));tower.position.set(Math.sin(a)*5.6,1.6,Math.cos(a)*5.6);digital.add(tower);}const particles=new THREE.BufferGeometry();const arr=new Float32Array(600);for(let i=0;i<arr.length;i+=3){arr[i]=(Math.random()-.5)*18;arr[i+1]=Math.random()*8;arr[i+2]=(Math.random()-.5)*18;}particles.setAttribute('position',new THREE.BufferAttribute(arr,3));const stars=new THREE.Points(particles,new THREE.PointsMaterial({color:0x66faff,size:.05}));scene.add(stars);
  let frame=0, previousHit=0, pulse=0; const resize=()=>{const w=el.clientWidth,h=el.clientHeight;renderer.setSize(w,h);camera.aspect=w/Math.max(h,1);camera.updateProjectionMatrix();};window.addEventListener('resize',resize);resize();
- const tick=(t:number)=>{frame=requestAnimationFrame(tick);const s=live.current;lava.visible=false;digital.visible=false;marker.material.color.setHex(s.theme==='lava'?0xff6979:0x42f5ff); if(s.hit!==previousHit){pulse=1;previousHit=s.hit;} pulse*=.9;
+ const tick=(t:number)=>{frame=requestAnimationFrame(tick);const s=live.current;lava.visible=false;digital.visible=false;marker.material.color.setHex(s.theme==='lava'?0xff6979:0x42f5ff);shock.visible=s.phase==='playing'&&s.warning>0;shock.material.color.setHex(s.dodged?0x5affcf:0xff4d68);shock.scale.setScalar(1+(1-Math.max(0,s.warning)/3000)*1.35);shock.material.opacity=s.dodged?.24:.65; if(s.hit!==previousHit){pulse=1;previousHit=s.hit;} pulse*=.9;
  const point=new THREE.Vector3(s.placement.x/50-1,1-s.placement.y/50,.5).unproject(camera);
  const dir=point.sub(camera.position).normalize();const distance=-camera.position.z/dir.z;
  anchor.position.copy(camera.position).addScaledVector(dir,distance);anchor.scale.setScalar(s.placement.size);
- boss.rotation.y=Math.sin(t*.0004)*.18;boss.scale.setScalar(1+pulse*.08);rings[0].rotation.z=t*.0005;rings[1].rotation.y=t*.0007;wire.material.color.setHex(s.theme==='lava'?0xff385e:0x29faff);light.color.setHex(s.theme==='lava'?0xff385e:0x20dfff);eye.material.color.setHex(pulse>.2?0xffffff:s.theme==='lava'?0xffbfac:0xc4ffff);stars.rotation.y=t*.00002;renderer.render(scene,camera);};frame=requestAnimationFrame(tick);
- return()=>{cancelAnimationFrame(frame);window.removeEventListener('resize',resize);scene.traverse(o=>{if(o instanceof THREE.Mesh || o instanceof THREE.Points){o.geometry.dispose();const mat=o.material; (Array.isArray(mat)?mat:[mat]).forEach((m:THREE.Material)=>m.dispose());}});renderer.dispose();el.removeChild(renderer.domElement);};},[]);
+ boss.rotation.y=THREE.MathUtils.degToRad(s.placement.rotation??0)+Math.sin(t*.0004)*.18;boss.scale.setScalar(1+pulse*.08);if(rig.current?.model){rig.current.model.rotation.y=THREE.MathUtils.degToRad(s.placement.rotation??0)+Math.sin(t*.0004)*.18;rig.current.model.scale.setScalar(rig.current.modelScale*(1+pulse*.08));}rings[0].rotation.z=t*.0005;rings[1].rotation.y=t*.0007;wire.material.color.setHex(s.theme==='lava'?0xff385e:0x29faff);light.color.setHex(s.theme==='lava'?0xff385e:0x20dfff);eye.material.color.setHex(pulse>.2?0xffffff:s.theme==='lava'?0xffbfac:0xc4ffff);stars.rotation.y=t*.00002;renderer.render(scene,camera);};frame=requestAnimationFrame(tick);
+ return()=>{cancelAnimationFrame(frame);window.removeEventListener('resize',resize);if(rig.current?.model){rig.current.anchor.remove(rig.current.model);disposeBoss(rig.current.model);}rig.current=null;scene.traverse(o=>{if(o instanceof THREE.Mesh || o instanceof THREE.Points){o.geometry.dispose();const mat=o.material; (Array.isArray(mat)?mat:[mat]).forEach((m:THREE.Material)=>m.dispose());}});renderer.dispose();el.removeChild(renderer.domElement);};},[]);
+ useEffect(()=>{let cancelled=false;const r=rig.current;if(!r)return;let current:THREE.Group|null=null;
+  if(!bossFile){r.placeholder.visible=true;live.current.onBossStatus?.('当前使用本地占位 Boss');return;}
+  live.current.onBossStatus?.(`正在读取 ${bossFile.name}…`);
+  void loadBoss(bossFile).then(model=>{if(cancelled||rig.current!==r){disposeBoss(model);return;}current=model;r.model=model;r.modelScale=model.scale.x;r.anchor.add(model);r.placeholder.visible=false;live.current.onBossStatus?.(`已加载：${bossFile.name}（本地文件）`);}).catch(e=>{if(cancelled)return;r.placeholder.visible=true;live.current.onBossStatus?.(`模型加载失败：${(e as Error).message}；已使用占位 Boss`);});
+  return()=>{cancelled=true;if(current&&rig.current===r){r.anchor.remove(current);disposeBoss(current);if(r.model===current)r.model=null;r.placeholder.visible=true;}};
+ },[bossFile]);
  return <div className="arena" ref={host}/>;
 }
 
