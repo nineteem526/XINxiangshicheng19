@@ -1,4 +1,4 @@
-import {useCallback,useEffect,useReducer,useRef,useState} from 'react';import qrcode from 'qrcode-generator';import {Arena} from './Arena';import {ImageAnchor} from './vision/imageAnchor';import {useCamera,Phone} from './camera';import {usePose} from './vision/usePose';import type {Action} from './vision/actions';import './style.css';
+import {useCallback,useEffect,useReducer,useRef,useState} from 'react';import PoseTest from './PoseTest';import qrcode from 'qrcode-generator';import {Arena} from './Arena';import {ImageAnchor} from './vision/imageAnchor';import {useCamera,Phone} from './camera';import {usePose} from './vision/usePose';import type {Action} from './vision/actions';import './style.css';
 type State={phase:'idle'|'playing'|'win'|'lose';hp:number;player:number;energy:number;remaining:number;next:number;warning:number;dodged:boolean;event:string;hit:number};
 type Input={type:'start'}|{type:'tick',ms:number}|{type:'action',action:Action};
 const initial=():State=>({phase:'idle',hp:100,player:100,energy:0,remaining:75000,next:9000,warning:0,dodged:false,event:'站直并校准，然后开始',hit:0});
@@ -25,7 +25,7 @@ function Game(){const video=useRef<HTMLVideoElement>(null);const foreground=useR
  </main>;
 }
 import {createRoot} from 'react-dom/client';import {StrictMode} from 'react';
-createRoot(document.getElementById('root')!).render(<StrictMode>{new URLSearchParams(location.search).has('phone')?<Phone/>:<Game/>}</StrictMode>);
+createRoot(document.getElementById('root')!).render(<StrictMode>{new URLSearchParams(location.search).has('phone')?<Phone/>:new URLSearchParams(location.search).has('pose-test')?<PoseTest/>:<Game/>}</StrictMode>);
 
 
 
