@@ -1,16 +1,15 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
-import { ActionRecognizer, type Action } from './actions';
-export function usePose(video: RefObject<HTMLVideoElement|null>, active:boolean, onAction:(a:Action)=>void) {
+import { FilesetResolver, PoseLandmarker, type MPMask } from '@mediapipe/tasks-vision';
+import { ActionRecognizer, type Action, type Point } from './actions';
+export function usePose(video: RefObject<HTMLVideoElement|null>, active:boolean, onAction:(a:Action)=>void, foreground:RefObject<HTMLCanvasElement|null>, occlusion:boolean) {
   const recognizer=useRef(new ActionRecognizer()); const callback=useRef(onAction); callback.current=onAction;
-  const [status,setStatus]=useState('等待摄像头'); const [detail,setDetail]=useState(''); const [last,setLast]=useState('—');
-  useEffect(()=>{ if(!active){setStatus('等待摄像头');return;} let stopped=false, raf=0, model:PoseLandmarker|null=null, lastVideo=-1, lastUi=0;
-    (async()=>{try{setStatus('加载姿态模型中'); const files=await FilesetResolver.forVisionTasks('/wasm');
-      model=await PoseLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:'/models/pose_landmarker_lite.task'},runningMode:'VIDEO',numPoses:1,minPoseDetectionConfidence:.55,minPosePresenceConfidence:.55,minTrackingConfidence:.55});
-      if(stopped){model.close();return;} setStatus('姿态模型就绪');
-      const loop=()=>{if(stopped)return; const v=video.current; const now=performance.now(); if(v && v.readyState>=2 && v.currentTime!==lastVideo){lastVideo=v.currentTime; const result=model!.detectForVideo(v,now); const p=result.landmarks[0]; if(p){const r=recognizer.current.update(p,now); for(const a of r.actions){setLast(a);callback.current(a);} if(now-lastUi>150){setDetail(r.status);lastUi=now;}}else {recognizer.current.lost();if(now-lastUi>300){setDetail('未检测到人体');lastUi=now;}}} raf=requestAnimationFrame(loop);}; loop();
-    }catch(e){setStatus(`姿态模型失败：${(e as Error).message}`);}})(); return()=>{stopped=true;cancelAnimationFrame(raf);model?.close();};
-  },[active,video]);
-  return {status,detail,last,calibrate:()=>recognizer.current.reset()};
+  const landmarks=useRef<Point[]|null>(null);const [status,setStatus]=useState('等待摄像头'); const [detail,setDetail]=useState(''); const [last,setLast]=useState('—');
+  useEffect(()=>{if(!active){setStatus('等待摄像头');landmarks.current=null;return;}let stopped=false,raf=0,model:PoseLandmarker|null=null,lastVideo=-1,lastUi=0,lastMask=0;
+    const maskCanvas=document.createElement('canvas');const paint=(mask:MPMask|undefined,v:HTMLVideoElement)=>{const out=foreground.current;if(!out)return;const ctx=out.getContext('2d');if(!ctx)return;if(!mask||!occlusion){ctx.clearRect(0,0,out.width,out.height);return;}const {width,height}=mask;if(!width||!height)return;if(out.width!==width||out.height!==height){out.width=width;out.height=height;maskCanvas.width=width;maskCanvas.height=height;}const mctx=maskCanvas.getContext('2d');if(!mctx)return;const values=mask.getAsFloat32Array();const pixels=mctx.createImageData(width,height);for(let i=0;i<values.length;i++){const alpha=Math.max(0,Math.min(1,(values[i]-.35)/.3));pixels.data[i*4]=255;pixels.data[i*4+1]=255;pixels.data[i*4+2]=255;pixels.data[i*4+3]=Math.round(alpha*255);}mctx.putImageData(pixels,0,0);ctx.clearRect(0,0,width,height);ctx.globalCompositeOperation='source-over';ctx.drawImage(v,0,0,width,height);ctx.globalCompositeOperation='destination-in';ctx.drawImage(maskCanvas,0,0);ctx.globalCompositeOperation='source-over';};
+    (async()=>{try{setStatus('加载姿态模型中');const files=await FilesetResolver.forVisionTasks('/wasm');model=await PoseLandmarker.createFromOptions(files,{baseOptions:{modelAssetPath:'/models/pose_landmarker_lite.task'},runningMode:'VIDEO',numPoses:1,minPoseDetectionConfidence:.55,minPosePresenceConfidence:.55,minTrackingConfidence:.55,outputSegmentationMasks:occlusion});if(stopped){model.close();return;}setStatus('姿态模型就绪');
+      const loop=()=>{if(stopped)return;const v=video.current,now=performance.now();if(v&&v.readyState>=2&&v.currentTime!==lastVideo){lastVideo=v.currentTime;model!.detectForVideo(v,now,result=>{const p=result.landmarks[0];landmarks.current=p??null;if(p){const r=recognizer.current.update(p,now);for(const a of r.actions){setLast(a);callback.current(a);}if(now-lastUi>150){setDetail(r.status);lastUi=now;}}else{recognizer.current.lost();if(now-lastUi>300){setDetail('未检测到人体');lastUi=now;}}if(now-lastMask>=100 || !p){try{paint(result.segmentationMasks?.[0],v);}catch{const c=foreground.current;c?.getContext("2d")?.clearRect(0,0,c.width,c.height);}lastMask=now;}});}raf=requestAnimationFrame(loop);};loop();
+    }catch(e){setStatus(`姿态模型失败：${(e as Error).message}`);}})();return()=>{stopped=true;cancelAnimationFrame(raf);model?.close();landmarks.current=null;const c=foreground.current;c?.getContext('2d')?.clearRect(0,0,c.width,c.height);};
+  },[active,video,foreground,occlusion]);
+  return {status,detail,last,landmarks,calibrate:()=>recognizer.current.reset()};
 }
 

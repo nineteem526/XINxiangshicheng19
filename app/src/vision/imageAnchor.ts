@@ -1,0 +1,10 @@
+/** Tracks one textured background patch as an approximate 2D translation, not a 3D anchor. */
+export class ImageAnchor {
+ private patch:number[]=[];private origin={x:0,y:0};private current={x:0,y:0};private failures=0;
+ constructor(private w:number,private h:number,private radius=4){}
+ private sample(gray:Uint8Array,x:number,y:number){const p:number[]=[];for(let j=-this.radius;j<=this.radius;j++)for(let i=-this.radius;i<=this.radius;i++)p.push(gray[(y+j)*this.w+x+i]);return p;}
+ initialize(gray:Uint8Array){let best=0;let chosen:{x:number;y:number}|null=null;for(const y of [12,22,32])for(const x of [14,30,50,this.w-51,this.w-31,this.w-15]){if(x<this.radius+8||x>=this.w-this.radius-8||y>=this.h-this.radius-8)continue;const p=this.sample(gray,x,y);const mean=p.reduce((a,b)=>a+b,0)/p.length;const variance=p.reduce((a,b)=>a+(b-mean)**2,0)/p.length;if(variance>best){best=variance;chosen={x,y};}}if(!chosen||best<180)return false;this.origin={...chosen};this.current={...chosen};this.patch=this.sample(gray,chosen.x,chosen.y);this.failures=0;return true;}
+ update(gray:Uint8Array):{ok:boolean;dx:number;dy:number}{if(!this.patch.length)return {ok:false,dx:0,dy:0};let best=Infinity,second=Infinity,bx=0,by=0;const candidates:{score:number;x:number;y:number}[]=[];for(let dy=-6;dy<=6;dy++)for(let dx=-8;dx<=8;dx++){const x=this.current.x+dx,y=this.current.y+dy;if(x<this.radius||x>=this.w-this.radius||y<this.radius||y>=this.h-this.radius)continue;let sum=0,k=0;for(let j=-this.radius;j<=this.radius;j++)for(let i=-this.radius;i<=this.radius;i++)sum+=Math.abs(gray[(y+j)*this.w+x+i]-this.patch[k++]);const score=sum/this.patch.length;candidates.push({score,x,y});if(score<best){best=score;bx=x;by=y;}}
+ for(const c of candidates)if(Math.abs(c.x-bx)>2||Math.abs(c.y-by)>2)second=Math.min(second,c.score);
+ if(best>22 || (second<Infinity&&second-best<2)){this.failures++;return {ok:false,dx:this.current.x-this.origin.x,dy:this.current.y-this.origin.y};}this.failures=0;this.current={x:bx,y:by};return {ok:true,dx:bx-this.origin.x,dy:by-this.origin.y};}
+}
