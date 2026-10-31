@@ -1,10 +1,10 @@
 import {useEffect,useRef,useState,type RefObject} from 'react';
-import {ActionRecognizer,type Action,type Point} from './actions';
+import {ActionRecognizer,type Action,type Direction,type Point} from './actions';
 import {drawSkeleton} from './poseDrawing';
 
 type Response={type:'ready'}|{type:'error';message:string}|{type:'result';timestamp:number;points:Point[]|null};
 
-export function usePoseWorker(video:RefObject<HTMLVideoElement|null>,active:boolean,onAction:(a:Action)=>void,skeleton:RefObject<HTMLCanvasElement|null>,showSkeleton:boolean,maxFps:number,onFailure:()=>void){
+export function usePoseWorker(video:RefObject<HTMLVideoElement|null>,active:boolean,onAction:(a:Action,direction?:Direction)=>void,skeleton:RefObject<HTMLCanvasElement|null>,showSkeleton:boolean,maxFps:number,onFailure:()=>void){
  const recognizer=useRef(new ActionRecognizer()),callback=useRef(onAction),skeletonOn=useRef(showSkeleton),landmarks=useRef<Point[]|null>(null);callback.current=onAction;skeletonOn.current=showSkeleton;
  const [status,setStatus]=useState('等待摄像头'),[detail,setDetail]=useState(''),[last,setLast]=useState('—');
  useEffect(()=>{if(!showSkeleton){const c=skeleton.current;c?.getContext('2d')?.clearRect(0,0,c.width,c.height);}},[showSkeleton,skeleton]);
@@ -17,7 +17,7 @@ export function usePoseWorker(video:RefObject<HTMLVideoElement|null>,active:bool
   worker.onmessage=(event:MessageEvent<Response>)=>{
    if(stopped)return;const msg=event.data;if(msg.type==='ready'){ready=true;setStatus('姿态模型就绪（后台）');return;}if(msg.type==='error'){console.warn('后台姿态识别不可用，切换兼容模式：',msg.message);onFailure();return;}
    busy=false;const v=video.current,p=msg.points;landmarks.current=p;if(!v)return;drawSkeleton(skeleton.current,p,v,skeletonOn.current);
-   const now=performance.now();if(p){const result=recognizer.current.update(p,msg.timestamp);for(const action of result.actions){setLast(action);callback.current(action);}if(now-lastUi>150){setDetail(result.status);lastUi=now;}}
+   const now=performance.now();if(p){const result=recognizer.current.update(p,msg.timestamp);for(const action of result.actions){setLast(action);callback.current(action,action==='dodge'?result.direction:undefined);}if(now-lastUi>150){setDetail(result.status);lastUi=now;}}
    else{recognizer.current.lost();if(now-lastUi>300){setDetail('未检测到人体');lastUi=now;}}
   };
   worker.onerror=event=>{event.preventDefault();if(!stopped){console.warn('后台姿态识别无法启动，切换兼容模式：',event.message);onFailure();}};

@@ -1,3 +1,4 @@
+import LaneGame from './LaneGame';
 import {useCallback,useEffect,useReducer,useRef,useState} from 'react';import PoseTest from './PoseTest';import DepthLab from './DepthLab';import qrcode from 'qrcode-generator';import {Arena} from './Arena';import {ImageAnchor} from './vision/imageAnchor';import {useCamera,Phone} from './camera';import {usePose} from './vision/usePose';import type {Action} from './vision/actions';import './style.css';
 import {combatReducer,initialCombat} from './game/combat';
 const labels:Record<string,string>={punch:'挥拳',dodge:'侧身闪避',duck:'下蹲',special:'双手举高',ready:'准备姿势','—':'暂无'};
@@ -26,7 +27,7 @@ function Game(){const video=useRef<HTMLVideoElement>(null);const skeleton=useRef
  </main>;
 }
 import {createRoot} from 'react-dom/client';import {StrictMode} from 'react';
-createRoot(document.getElementById('root')!).render(<StrictMode>{new URLSearchParams(location.search).has('phone')?<Phone/>:new URLSearchParams(location.search).has('pose-test')?<PoseTest/>:new URLSearchParams(location.search).has('depth-lab')?<DepthLab/>:<Game/>}</StrictMode>);
+createRoot(document.getElementById('root')!).render(<StrictMode>{new URLSearchParams(location.search).has('phone')?<Phone/>:new URLSearchParams(location.search).has('pose-test')?<PoseTest/>:new URLSearchParams(location.search).has('depth-lab')?<DepthLab/>:new URLSearchParams(location.search).has('boss-classic')?<Game/>:<LaneGame/>}</StrictMode>);
 
 
 

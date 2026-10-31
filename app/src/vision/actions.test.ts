@@ -19,3 +19,4 @@ it('recognises left and right as the same dodge action after returning to centre
 
 it('allows a dodge immediately after a different action',()=>{const r=new ActionRecognizer(),p=pose();p[15].y=.1;p[16].y=.1;r.update(p,1000);for(let t=1100;t<=1800;t+=100)r.update(p,t);p[15].y=.6;p[16].y=.6;for(const i of [11,12,23,24])p[i].x+=.06;r.update(p,1900);expect(r.update(p,2000).actions).toContain('dodge');});
 
+it('reports lean direction without changing existing dodge actions',()=>{const r=new ActionRecognizer(),p=pose();r.update(p,1000);for(const i of [11,12,23,24])p[i].x-=.06;r.update(p,1100);let result=r.update(p,1200);expect(result.actions).toContain('dodge');expect(result.direction).toBe('left');for(const i of [11,12,23,24])p[i].x+=.06;for(let t=1300;t<=2100;t+=100)r.update(p,t);for(const i of [11,12,23,24])p[i].x+=.06;r.update(p,2200);result=r.update(p,2300);expect(result.direction).toBe('right');});

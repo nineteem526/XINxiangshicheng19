@@ -1,10 +1,10 @@
 import {useEffect,useRef,useState,type RefObject} from 'react';
 import {FilesetResolver,PoseLandmarker} from '@mediapipe/tasks-vision';
-import {ActionRecognizer,type Action,type Point} from './actions';
+import {ActionRecognizer,type Action,type Direction,type Point} from './actions';
 import {drawSkeleton} from './poseDrawing';
 
 /** Reduced-load fallback for browsers that cannot run the pose worker. */
-export function usePoseMain(video:RefObject<HTMLVideoElement|null>,active:boolean,onAction:(a:Action)=>void,skeleton:RefObject<HTMLCanvasElement|null>,showSkeleton:boolean,maxFps=15){
+export function usePoseMain(video:RefObject<HTMLVideoElement|null>,active:boolean,onAction:(a:Action,direction?:Direction)=>void,skeleton:RefObject<HTMLCanvasElement|null>,showSkeleton:boolean,maxFps=15){
  const recognizer=useRef(new ActionRecognizer()),callback=useRef(onAction),skeletonOn=useRef(showSkeleton),landmarks=useRef<Point[]|null>(null);callback.current=onAction;skeletonOn.current=showSkeleton;
  const [status,setStatus]=useState('等待摄像头'),[detail,setDetail]=useState(''),[last,setLast]=useState('—');
  useEffect(()=>{if(!showSkeleton){const c=skeleton.current;c?.getContext('2d')?.clearRect(0,0,c.width,c.height);}},[showSkeleton,skeleton]);
@@ -21,7 +21,7 @@ export function usePoseMain(video:RefObject<HTMLVideoElement|null>,active:boolea
      lastVideo=v.currentTime;lastInference=now;const scale=Math.min(1,640/Math.max(v.videoWidth,v.videoHeight)),w=Math.max(1,Math.round(v.videoWidth*scale)),h=Math.max(1,Math.round(v.videoHeight*scale));
      if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}ctx.drawImage(v,0,0,w,h);
      model!.detectForVideo(canvas,now,result=>{const p=result.landmarks[0]??null;landmarks.current=p;drawSkeleton(skeleton.current,p,v,skeletonOn.current);
-      if(p){const r=recognizer.current.update(p,now);for(const action of r.actions){setLast(action);callback.current(action);}if(now-lastUi>150){setDetail(r.status);lastUi=now;}}
+      if(p){const r=recognizer.current.update(p,now);for(const action of r.actions){setLast(action);callback.current(action,action==='dodge'?r.direction:undefined);}if(now-lastUi>150){setDetail(r.status);lastUi=now;}}
       else{recognizer.current.lost();if(now-lastUi>300){setDetail('未检测到人体');lastUi=now;}}
      });
     }
