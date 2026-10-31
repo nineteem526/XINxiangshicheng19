@@ -34,5 +34,5 @@ export async function loadBoss(file:File):Promise<THREE.Group>{
   if(file.size>100*1024*1024)throw new Error('模型超过 100 MB，请先压缩后再试');
   const data=await file.arrayBuffer();validateGlb(data);
   const gltf=await new GLTFLoader().parseAsync(data,'');
-  try{return normalizeBoss(gltf.scene);}catch(error){disposeBoss(gltf.scene);throw error;}
+  try{const root=normalizeBoss(gltf.scene);root.animations=gltf.animations;return root;}catch(error){disposeBoss(gltf.scene);throw error;}
 }

@@ -13,25 +13,29 @@ export class ActionRecognizer {
   private lastFrame=0;
   private lastActionAt=-Infinity;
   private lastDefenseAt=-Infinity;
-  private readonly actionIntervalMs=1000;
+  private readonly actionIntervalMs:number;
+  private readonly enabledActions:Set<Action>|null;
+  constructor(options?:{enabledActions?:Action[];actionIntervalMs?:number}){this.enabledActions=options?.enabledActions?new Set(options.enabledActions):null;this.actionIntervalMs=options?.actionIntervalMs??1000;}
   private leanSince=0;private leanDirection: 'left'|'right'|null=null;private duckSince=0;
   private resetHands(){this.hands=[hand(),hand()];}
   lost(){this.resetHands();this.held={special:0,ready:0};this.lastFrame=0;this.leanSince=0;this.leanDirection=null;this.duckSince=0;}
   reset(){this.baseline=null;this.lost();this.armed={lean:true,duck:true,special:true,ready:true};this.last={punch:-Infinity,dodge:-Infinity,duck:-Infinity,special:-Infinity,ready:-Infinity};this.lastActionAt=-Infinity;this.lastDefenseAt=-Infinity;}
   update(p: Point[], t: number): {actions:Action[]; status:string; direction?:Direction} {
     const ids=[11,12,15,16,23,24];
-    if(ids.some(i=>!p[i]||(p[i].visibility??0)<.6)){this.lost();return {actions:[],status:'请确保肩、手和髋部完整入镜'};}
+    if((this.enabledActions?[11,12,23,24]:ids).some(i=>!p[i]||(p[i].visibility??0)<.6)){this.lost();return {actions:[],status:'请确保肩、手和髋部完整入镜'};}
     if(this.lastFrame && (t-this.lastFrame>250 || t<=this.lastFrame))this.lost();this.lastFrame=t;
     const [ls,rs,lw,rw,lh,rh]=ids.map(i=>p[i]);
+    const visible=(w:Point|undefined)=>!!w&&(w.visibility??0)>=.6;
     const x=(ls.x+rs.x)*.35+(lh.x+rh.x)*.15,y=(lh.y+rh.y)/2,scale=Math.hypot(ls.x-rs.x,ls.y-rs.y);
     if(scale<.06){this.lost();return {actions:[],status:'请靠近摄像头'};}
     if(!this.baseline){this.baseline={x,y,scale};return {actions:[],status:'已校准，站直后开始'};}
     const b=this.baseline,dx=(x-b.x)/b.scale,dy=(y-b.y)/b.scale;
-    const actions:Action[]=[];let dodgeDirection:Direction|undefined;const emit=(a:Action,cd:number)=>{const defensive=a==='dodge'||a==='duck';if(t-this.last[a]<=cd)return false;if(defensive){if(t-this.lastDefenseAt<700)return false;this.lastDefenseAt=t;}else{if(t-this.lastActionAt<this.actionIntervalMs)return false;this.lastActionAt=t;}actions.push(a);this.last[a]=t;return true;};
-    const raised=lw.y<ls.y-.08&&rw.y<rs.y-.08,ready=lw.y<lh.y&&rw.y<rh.y&&!raised;
+    const actions:Action[]=[];let dodgeDirection:Direction|undefined;const emit=(a:Action,cd:number)=>{const defensive=a==='dodge'||a==='duck';if(this.enabledActions&&!this.enabledActions.has(a))return false;if(t-this.last[a]<=cd)return false;if(defensive){if(t-this.lastDefenseAt<700)return false;this.lastDefenseAt=t;}else{if(t-this.lastActionAt<this.actionIntervalMs)return false;this.lastActionAt=t;}actions.push(a);this.last[a]=t;return true;};
+    const raised=visible(lw)&&visible(rw)&&lw.y<ls.y-.08&&rw.y<rs.y-.08,ready=visible(lw)&&visible(rw)&&lw.y<lh.y&&rw.y<rh.y&&!raised;
     if(raised){if(!this.held.special)this.held.special=t;if(this.armed.special&&t-this.held.special>650){if(emit('special',1800))this.armed.special=false;}}else{this.held.special=0;this.armed.special=true;}
     let maxTravel=0;
     for(const [i,w] of [lw,rw].entries()){
+      if(!visible(w)){this.hands[i]=hand();continue;}
       const h=this.hands[i],shoulder=i===0?ls:rs;
       const relative={x:(w.x-shoulder.x)/b.scale,y:(w.y-shoulder.y)/b.scale};
       if(!h.smooth){h.smooth=relative;h.anchor={...relative};h.stableAt=t;continue;}
@@ -44,8 +48,8 @@ export class ActionRecognizer {
       if(!h.motionAt && dist>.18){h.motionAt=t;h.samples=1;}
       else if(h.motionAt)h.samples++;
       if(h.motionAt && t-h.motionAt>650){this.hands[i]=hand();continue;}
-      if(h.motionAt && t-h.motionAt>=100 && h.samples>=3 && dist>.7 && w.y<y){
-        if(emit('punch',850)){h.locked=true;h.armed=false;h.returnAt=0;h.motionAt=0;h.samples=0;break;}h.locked=true;h.armed=false;h.returnAt=0;
+      if(h.motionAt && t-h.motionAt>=100 && h.samples>=3 && dist>(this.actionIntervalMs===1000?.7:.55) && w.y<y){
+        if(emit('punch',this.actionIntervalMs===1000?850:550)){h.locked=true;h.armed=false;h.returnAt=0;h.motionAt=0;h.samples=0;break;}h.locked=true;h.armed=false;h.returnAt=0;
       }
     }
     const direction=dx<0?'left':'right';
