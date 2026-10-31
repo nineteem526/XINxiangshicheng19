@@ -7,3 +7,4 @@ __pycache__/
 .vite/
 .playwright-cli/
 app/public/wasm/
+depth-poc/models/

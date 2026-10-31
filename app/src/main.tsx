@@ -1,4 +1,4 @@
-import {useCallback,useEffect,useReducer,useRef,useState} from 'react';import PoseTest from './PoseTest';import qrcode from 'qrcode-generator';import {Arena} from './Arena';import {ImageAnchor} from './vision/imageAnchor';import {useCamera,Phone} from './camera';import {usePose} from './vision/usePose';import type {Action} from './vision/actions';import './style.css';
+import {useCallback,useEffect,useReducer,useRef,useState} from 'react';import PoseTest from './PoseTest';import DepthLab from './DepthLab';import qrcode from 'qrcode-generator';import {Arena} from './Arena';import {ImageAnchor} from './vision/imageAnchor';import {useCamera,Phone} from './camera';import {usePose} from './vision/usePose';import type {Action} from './vision/actions';import './style.css';
 import {combatReducer,initialCombat} from './game/combat';
 const labels:Record<string,string>={punch:'挥拳',dodge:'侧身闪避',duck:'下蹲',special:'双手举高',ready:'准备姿势','—':'暂无'};
 function Game(){const video=useRef<HTMLVideoElement>(null);const foreground=useRef<HTMLCanvasElement>(null);const skeleton=useRef<HTMLCanvasElement>(null);const [showSkeleton,setShowSkeleton]=useState(true);const [occlusion,setOcclusion]=useState(true);const camera=useCamera(video);const [state,dispatch]=useReducer(combatReducer,undefined,initialCombat);const [theme,setTheme]=useState<'lava'|'digital'>('lava');const [brief,setBrief]=useState<{object:string;boss:string;description:string}|null>(null);const [scanMessage,setScanMessage]=useState('');const [scanning,setScanning]=useState(false);const [addresses,setAddresses]=useState<string[]>([]);const [index,setIndex]=useState(0);const [pair,setPair]=useState(false);const [debug,setDebug]=useState(true);const [mirrored,setMirrored]=useState(false);const [contain,setContain]=useState(true);const [sound,setSound]=useState(true);const [placing,setPlacing]=useState(false);const [groundStatus,setGroundStatus]=useState('等待人物双脚入镜以估计地面');const [trackStatus,setTrackStatus]=useState('未锁定画面');const track=useRef<{matcher:ImageAnchor;canvas:HTMLCanvasElement;base:{x:number;y:number};misses:number}|null>(null);const autoGround=useRef(false);const [placement,setPlacement]=useState({x:72,y:75,size:.8});const audio=useRef<AudioContext|null>(null);const prior=useRef(state);
@@ -22,7 +22,7 @@ function Game(){const video=useRef<HTMLVideoElement>(null);const foreground=useR
  </main>;
 }
 import {createRoot} from 'react-dom/client';import {StrictMode} from 'react';
-createRoot(document.getElementById('root')!).render(<StrictMode>{new URLSearchParams(location.search).has('phone')?<Phone/>:new URLSearchParams(location.search).has('pose-test')?<PoseTest/>:<Game/>}</StrictMode>);
+createRoot(document.getElementById('root')!).render(<StrictMode>{new URLSearchParams(location.search).has('phone')?<Phone/>:new URLSearchParams(location.search).has('pose-test')?<PoseTest/>:new URLSearchParams(location.search).has('depth-lab')?<DepthLab/>:<Game/>}</StrictMode>);
 
 
 
