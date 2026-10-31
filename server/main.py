@@ -63,3 +63,32 @@ async def phone(ws: WebSocket, code: str):
         room['phone'] = None
         try: await room['host'].send_json({'type':'left'})
         except RuntimeError: pass
+
+# Only the local desktop can initiate paid vision requests through the Vite proxy.
+from ipaddress import ip_address
+from pathlib import Path
+from fastapi import Request
+from pydantic import BaseModel, Field
+from dotenv import load_dotenv
+from scan import create_world
+load_dotenv(Path(__file__).with_name('.env'))
+
+class ScanRequest(BaseModel):
+    image: str = Field(max_length=2_500_000)
+
+@app.post('/api/scan')
+async def scan_object(request: Request, body: ScanRequest):
+    forwarded=request.headers.get('x-forwarded-for','').split(',')[0].strip()
+    peer=forwarded or (request.client.host if request.client else '')
+    try:
+        if not ip_address(peer).is_loopback:
+            return {'ok':False,'error':'仅电脑端可以发起扫描'}
+    except ValueError:
+        return {'ok':False,'error':'无法确认请求来源'}
+    try:
+        brief=await create_world(body.image)
+        return {'ok':True,'world':brief.model_dump()}
+    except ValueError as exc:
+        return {'ok':False,'error':str(exc)}
+    except Exception:
+        return {'ok':False,'error':'模型调用失败或返回数据无效，请使用本地预设'}
