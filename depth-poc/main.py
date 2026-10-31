@@ -21,7 +21,7 @@ inference_lock=asyncio.Lock()
 def load_model():
     global session, load_error
     try:
-        options=ort.SessionOptions(); options.intra_op_num_threads=max(1,min(4,os.cpu_count() or 2));options.graph_optimization_level=ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        options=ort.SessionOptions(); options.intra_op_num_threads=max(1,min(2,os.cpu_count() or 2));options.graph_optimization_level=ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         session=ort.InferenceSession(str(MODEL),sess_options=options,providers=['CPUExecutionProvider'])
     except Exception as exc: load_error=str(exc)
 
@@ -39,7 +39,7 @@ def infer(image_url:str):
     if len(data)>850_000: raise ValueError('图片过大')
     image=Image.open(io.BytesIO(data)).convert('RGB')
     # Dimensions are divisible by 14. Smaller inputs make an explicit speed/quality tradeoff.
-    resized=image.resize((322,182),Image.Resampling.BICUBIC)
+    resized=image.resize((252,140),Image.Resampling.BICUBIC)
     rgb=np.asarray(resized,dtype=np.float32)/255.0
     rgb=(rgb-np.array([.485,.456,.406],np.float32))/np.array([.229,.224,.225],np.float32)
     tensor=np.transpose(rgb,(2,0,1))[None].astype(np.float32)
@@ -47,7 +47,7 @@ def infer(image_url:str):
     depth=np.squeeze(out).astype(np.float32);low,high=np.percentile(depth,[2,98]); depth=np.clip((depth-low)/max(float(high-low),1e-6),0,1)
     result=Image.fromarray((depth*255).astype(np.uint8),mode='L').resize((256,144),Image.Resampling.BILINEAR)
     buf=io.BytesIO();result.save(buf,format='PNG',optimize=False)
-    return {'depth':'data:image/png;base64,'+base64.b64encode(buf.getvalue()).decode('ascii'),'inferenceMs':round(elapsed,1),'inputWidth':322,'inputHeight':182}
+    return {'depth':'data:image/png;base64,'+base64.b64encode(buf.getvalue()).decode('ascii'),'inferenceMs':round(elapsed,1),'inputWidth':252,'inputHeight':140}
 
 @app.post('/depth/frame')
 async def frame(request:Request,body:DepthRequest):
