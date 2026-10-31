@@ -20,5 +20,7 @@ class DepthServiceTests(unittest.TestCase):
             self.assertGreater(local['inferenceMs'],0)
             png=base64.b64decode(local['depth'].split(',',1)[1]);out=Image.open(io.BytesIO(png))
             self.assertEqual(out.size,(256,144))
+            self.assertGreater(int(np.ptp(np.asarray(out))),5)
 
 if __name__=='__main__':unittest.main()
+
