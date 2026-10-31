@@ -1,21 +1,21 @@
 export type Point = { x: number; y: number; z: number; visibility?: number };
-export type Action = 'punch' | 'left' | 'right' | 'duck' | 'special' | 'ready';
+export type Action = 'punch' | 'dodge' | 'duck' | 'special' | 'ready';
 type Vec={x:number;y:number};
 type HandState={smooth:Vec|null;anchor:Vec|null;stableAt:number;motionAt:number;samples:number;armed:boolean;locked:boolean;returnAt:number};
 const hand=():HandState=>({smooth:null,anchor:null,stableAt:0,motionAt:0,samples:0,armed:false,locked:false,returnAt:0});
 export class ActionRecognizer {
   private baseline: {x:number; y:number; scale:number} | null = null;
   private hands:[HandState,HandState]=[hand(),hand()];
-  private last: Record<Action,number> = {punch:-Infinity,left:-Infinity,right:-Infinity,duck:-Infinity,special:-Infinity,ready:-Infinity};
+  private last: Record<Action,number> = {punch:-Infinity,dodge:-Infinity,duck:-Infinity,special:-Infinity,ready:-Infinity};
   private armed = { lean:true, duck:true, special:true, ready:true };
   private held = { special:0, ready:0 };
   private lastFrame=0;
   private lastActionAt=-Infinity;
-  private readonly actionIntervalMs=1500;
+  private readonly actionIntervalMs=1000;
   private leanSince=0;private leanDirection: 'left'|'right'|null=null;private duckSince=0;
   private resetHands(){this.hands=[hand(),hand()];}
   lost(){this.resetHands();this.held={special:0,ready:0};this.lastFrame=0;this.leanSince=0;this.leanDirection=null;this.duckSince=0;}
-  reset(){this.baseline=null;this.lost();this.armed={lean:true,duck:true,special:true,ready:true};this.last={punch:-Infinity,left:-Infinity,right:-Infinity,duck:-Infinity,special:-Infinity,ready:-Infinity};this.lastActionAt=-Infinity;}
+  reset(){this.baseline=null;this.lost();this.armed={lean:true,duck:true,special:true,ready:true};this.last={punch:-Infinity,dodge:-Infinity,duck:-Infinity,special:-Infinity,ready:-Infinity};this.lastActionAt=-Infinity;}
   update(p: Point[], t: number): {actions:Action[]; status:string} {
     const ids=[11,12,15,16,23,24];
     if(ids.some(i=>!p[i]||(p[i].visibility??0)<.6)){this.lost();return {actions:[],status:'请确保肩、手和髋部完整入镜'};}
@@ -47,7 +47,7 @@ export class ActionRecognizer {
       }
     }
     const direction=dx<0?'left':'right';
-    if(Math.abs(dx)>.20&&this.armed.lean){if(!this.leanSince||this.leanDirection!==direction){this.leanSince=t;this.leanDirection=direction;}else if(t-this.leanSince>=80){if(emit(direction,700)){this.armed.lean=false;this.leanSince=0;}}}else if(Math.abs(dx)<.11){this.armed.lean=true;this.leanSince=0;this.leanDirection=null;}else if(Math.abs(dx)<=.20){this.leanSince=0;this.leanDirection=null;}
+    if(Math.abs(dx)>.15&&this.armed.lean){if(!this.leanSince||this.leanDirection!==direction){this.leanSince=t;this.leanDirection=direction;}else if(t-this.leanSince>=60){if(emit('dodge',700)){this.armed.lean=false;this.leanSince=0;}}}else if(Math.abs(dx)<.08){this.armed.lean=true;this.leanSince=0;this.leanDirection=null;}else if(Math.abs(dx)<=.15){this.leanSince=0;this.leanDirection=null;}
     if(dy>.18&&this.armed.duck){if(!this.duckSince)this.duckSince=t;else if(t-this.duckSince>=80){if(emit('duck',700)){this.armed.duck=false;this.duckSince=0;}}}else if(dy<.09){this.armed.duck=true;this.duckSince=0;}else if(dy<=.18)this.duckSince=0;
     if(ready){if(!this.held.ready)this.held.ready=t;if(this.armed.ready&&t-this.held.ready>900){if(emit('ready',1800))this.armed.ready=false;}}else{this.held.ready=0;this.armed.ready=true;}
     const remaining=Math.max(0,this.actionIntervalMs-(t-this.lastActionAt));return {actions,status:`${remaining>0?`动作间隔 ${(remaining/1000).toFixed(1)} 秒`:'可以识别动作'} · 水平 ${dx.toFixed(2)} · 下蹲 ${dy.toFixed(2)} · 挥拳位移 ${maxTravel.toFixed(2)}`};
