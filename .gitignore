@@ -9,3 +9,5 @@ __pycache__/
 app/public/wasm/
 depth-poc/models/
 .venv/
+
+app/public/vendor/
