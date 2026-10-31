@@ -5,7 +5,7 @@ import {drawSkeleton} from './poseDrawing';
 type Response={type:'ready'}|{type:'error';message:string}|{type:'result';timestamp:number;points:Point[]|null};
 
 export function usePoseWorker(video:RefObject<HTMLVideoElement|null>,active:boolean,onAction:(a:Action,direction?:Direction)=>void,skeleton:RefObject<HTMLCanvasElement|null>,showSkeleton:boolean,maxFps:number,onFailure:()=>void,combatOnly=false){
- const recognizer=useRef(new ActionRecognizer(combatOnly?{enabledActions:['punch'],actionIntervalMs:650}:undefined)),callback=useRef(onAction),skeletonOn=useRef(showSkeleton),landmarks=useRef<Point[]|null>(null),landmarksAt=useRef(0);callback.current=onAction;skeletonOn.current=showSkeleton;
+ const recognizer=useRef(new ActionRecognizer(combatOnly?{enabledActions:['punch','special'],actionIntervalMs:650}:undefined)),callback=useRef(onAction),skeletonOn=useRef(showSkeleton),landmarks=useRef<Point[]|null>(null),landmarksAt=useRef(0);callback.current=onAction;skeletonOn.current=showSkeleton;
  const [status,setStatus]=useState('等待摄像头'),[detail,setDetail]=useState(''),[last,setLast]=useState('—');
  useEffect(()=>{if(!showSkeleton){const c=skeleton.current;c?.getContext('2d')?.clearRect(0,0,c.width,c.height);}},[showSkeleton,skeleton]);
  useEffect(()=>{

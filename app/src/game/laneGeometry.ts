@@ -29,3 +29,11 @@ export function monsterScreenPosition(lane:Lane,progress:number,layout:LaneLayou
  const p=monsterWorldPosition(lane,progress,layout).add(new THREE.Vector3(0,.45,0)).project(camera);
  return {x:(p.x+1)*width/2,y:(1-p.y)*height/2};
 }
+
+/** Approximate screen-space monster body bounds; no real-world depth or physical contact is measured. */
+export function monsterHitBox(lane:Lane,progress:number,layout:LaneLayout,width:number,height:number,modelScale:number){
+ const camera=new THREE.PerspectiveCamera(40,width/Math.max(1,height),.1,100);camera.position.set(0,3,12);camera.lookAt(0,1,0);camera.updateMatrixWorld();camera.updateProjectionMatrix();
+ const base=monsterWorldPosition(lane,progress,layout);const project=(x:number,y:number)=>{const p=base.clone().add(new THREE.Vector3(x,y,0)).project(camera);return {x:(p.x+1)*width/2,y:(1-p.y)*height/2};};
+ const left=project(-.75*modelScale,.7*modelScale),right=project(.75*modelScale,.7*modelScale),top=project(0,2.8*.83*modelScale),bottom=project(0,0);
+ return {left:Math.min(left.x,right.x)-12,right:Math.max(left.x,right.x)+12,top:Math.min(top.y,bottom.y)-12,bottom:Math.max(top.y,bottom.y)+12};
+}

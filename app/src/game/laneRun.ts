@@ -1,7 +1,7 @@
 export type Gem='red'|'blue'|'purple';
 export type Lane=0|1|2;
-export type Monster={id:number;lane:Lane;gem:Gem;progress:number};
-export type Feedback={id:number;kind:'hit'|'miss'|'clear'|'hurt';lane:Lane;gem?:Gem;progress?:number;slot?:number};
+export type Monster={id:number;lane:Lane;gem:Gem;progress:number;hp?:number;maxHp?:number};
+export type Feedback={id:number;kind:'hit'|'miss'|'clear'|'hurt'|'special';lane:Lane;gem?:Gem;progress?:number;slot?:number;monsterId?:number};
 export type RunState={feedback:Feedback|null;feedbackId:number;phase:'idle'|'playing'|'win'|'lose';lane:Lane;health:number;remaining:number;clears:number;gems:Gem[];monsters:Monster[];spawnIn:number;serial:number;event:string;hits:number};
 export type RunInput={type:'start'}|{type:'surrender'}|{type:'tick';ms:number}|{type:'move';step:-1|1}|{type:'punch'}|{type:'selectLane';lane:Lane};
 export const COLORS:Gem[]=['red','blue','purple'];

@@ -23,3 +23,77 @@
 @keyframes heavy-shake-b{0%,100%{translate:0 0}12%{translate:11px 6px}25%{translate:-10px -5px}40%{translate:8px -3px}55%{translate:-7px 4px}70%{translate:4px 2px}85%{translate:-2px -1px}}
 .impact-burst .impact-ring{border-width:7px;box-shadow:0 0 35px currentColor,inset 0 0 22px white}.impact-burst .impact-core{width:145px;height:145px;margin:-72px}.impact-burst .impact-spark{width:12px;height:34px;box-shadow:0 0 18px 5px currentColor}
 @media(prefers-reduced-motion:reduce){.heavy-shake-a .lane-video,.heavy-shake-a .lane-three,.heavy-shake-a .lane-skeleton,.heavy-shake-b .lane-video,.heavy-shake-b .lane-three,.heavy-shake-b .lane-skeleton{animation:none}}
+.choice-options{position:absolute;z-index:6;top:20%;left:20%;right:22%;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;pointer-events:none}.choice-option{padding:9px;text-align:center;background:#101629dd;border:1px solid #8d9bb8;border-radius:8px;color:white}.choice-option.selected{border:2px solid #ffe36e;box-shadow:0 0 20px #ffd84a88}.choice-option b,.choice-option span,.choice-option small{display:block}.choice-option span{font-size:18px;font-weight:800}.choice-option small{font-size:12px}.choice-locked{position:absolute;top:34%;left:50%;transform:translateX(-50%);z-index:7;color:#ffe36e;background:#201500dd;padding:8px 16px;border-radius:6px}
+.battle-effects{position:fixed;inset:0;width:100%;height:100%;z-index:6;pointer-events:none}
+
+/* Keep the hit readable without shaking the camera feed itself. */
+.heavy-shake-a .lane-video,.heavy-shake-a .lane-skeleton,.heavy-shake-b .lane-video,.heavy-shake-b .lane-skeleton{animation:none}
+.heavy-shake-a .lane-three,.heavy-shake-b .lane-three{animation-duration:.2s;animation-timing-function:ease-out}
+/* Large, high-contrast choices for players standing away from the display. */
+.choice-options{top:18%;left:12%;right:19%;gap:clamp(8px,1.2vw,20px)}
+.choice-option{padding:clamp(10px,1.1vw,20px);border-width:2px;background:#101629ed;min-height:100px}
+.choice-option b{font-size:clamp(19px,2vw,32px)}.choice-option span{font-size:clamp(22px,2.5vw,40px)}.choice-option small{font-size:clamp(16px,1.5vw,24px);font-weight:700}
+.choice-option.red{border-color:#ff5969}.choice-option.blue{border-color:#53c2ff}.choice-option.purple{border-color:#da84ff}.choice-option.shield{border-color:#6de6ac}
+.choice-option.selected{border-color:#ffe36e;box-shadow:0 0 0 3px #ffe36e,0 0 24px #ffd84a99}
+.ice-effects canvas{width:100%;height:100%;display:block}
+.monster-hp{position:fixed;z-index:6;transform:translate(-50%,-100%);width:clamp(65px,7vw,110px);pointer-events:none;background:#141421dc;border:2px solid #fff9;border-radius:8px;overflow:hidden;height:13px}.monster-hp i{height:100%;display:block;background:linear-gradient(90deg,#ff7658,#ffe989)}
+
+.impact-screen.special{animation:special-flash .65s ease-out;background:radial-gradient(circle,#fff 0%,#a7f5ff99 35%,#9c54ff66 70%,transparent 100%)}@keyframes special-flash{0%{opacity:0}15%{opacity:.9}100%{opacity:0}}
+
+/* Classic fantasy HUD: carved stone, dark timber and burnished brass. */
+.fantasy-ui{--gold:#c9a45b;--gold-light:#efda9d;--ink:#18140f;--parchment:#e6d4a5;font-family:Georgia,"Songti SC","SimSun",serif;color:#f2e6c9;background:#1b1b19}
+.fantasy-ui .lane-video{background:#1a1d1b}
+.fantasy-ui .lane-header{padding:7px 14px;align-items:center;min-height:58px;background:linear-gradient(180deg,#47423a 0%,#26241f 10%,#1c1b17 82%,#5e5239 88%,#14130f 100%);border-bottom:2px solid #8e7548;box-shadow:0 5px 12px #0009;gap:16px}
+.fantasy-ui .lane-brand{color:#ead5a1;font-size:15px;letter-spacing:.12em;text-shadow:0 2px 2px #000;flex:none}
+.fantasy-ui .lane-brand span{color:#f0e4bf}.fantasy-ui .lane-brand small{font-family:Georgia,"SimSun",serif;color:#ad9a6c;letter-spacing:.16em;font-size:10px;margin-top:2px}
+.fantasy-ui .lane-header nav{gap:4px;align-items:center;justify-content:flex-end}
+.fantasy-ui .lane-header nav a,.fantasy-ui button,.fantasy-ui select{border:1px solid #7e6b47;color:#e8dab8;background:linear-gradient(#544938,#2c2821 48%,#211f1a 52%,#353024);box-shadow:inset 0 1px #b9a16c66,inset 0 -1px #070806,0 1px 2px #000;font-family:inherit;text-decoration:none;text-shadow:0 1px #000;border-radius:2px}
+.fantasy-ui .lane-header nav a,.fantasy-ui .lane-header nav button{font-size:12px;padding:6px 7px;white-space:nowrap}
+.fantasy-ui button:hover,.fantasy-ui .lane-header nav a:hover{border-color:#d3b677;color:#fff0c1;background:linear-gradient(#74603f,#3e3424)}
+.fantasy-ui button:focus-visible,.fantasy-ui a:focus-visible{outline:2px solid #ffda85;outline-offset:2px}
+.fantasy-ui .lane-stats,.fantasy-ui .gem-panel,.fantasy-ui .lane-pair,.fantasy-ui .lane-adjust{background:repeating-linear-gradient(165deg,#ffffff08 0 1px,transparent 1px 13px),linear-gradient(145deg,#4b473e,#292923 42%,#1b1c18);border:3px ridge #a88c57;border-radius:2px;box-shadow:inset 0 0 0 2px #171611,inset 0 0 20px #0008,0 4px 10px #000a;color:#e9ddc3}
+.fantasy-ui .lane-stats{top:75px;left:15px;width:205px;padding:10px 12px;gap:3px}
+.fantasy-ui .lane-stats b{font-size:17px;color:#e5bd70;text-shadow:0 2px #000}.fantasy-ui .lane-stats b:first-child{color:#ce594b}.fantasy-ui .lane-stats i{color:#67554d}.fantasy-ui .lane-stats span{font-family:system-ui,sans-serif;font-size:11px;color:#d2c7ae;line-height:1.3}
+.fantasy-ui .gem-panel{top:auto;bottom:16px;right:15px;width:190px;max-height:none;padding:12px;overflow:visible}
+.fantasy-ui .gem-panel h2{font-size:18px;letter-spacing:.12em;color:#ead6a4;text-shadow:0 2px #000;border-bottom:1px solid #a1885688;padding-bottom:6px}
+.fantasy-ui .gem-panel p,.fantasy-ui .gem-panel small{font-family:system-ui,sans-serif;color:#c0b291;font-size:11px;margin:5px 0}.fantasy-ui .gem-panel strong{font-size:19px;color:#e5bf72;margin-top:4px}
+.fantasy-ui .gem-grid{gap:4px;margin:8px 0}.fantasy-ui .gem-slot{background:linear-gradient(145deg,#0e100f,#25271f);border:2px ridge #716345;box-shadow:inset 1px 2px 5px #000}.fantasy-ui .gem{font-size:25px;text-shadow:0 2px 3px #000}
+.fantasy-ui .choice-options{top:76px;left:50%;right:auto;width:min(54vw,690px);transform:translateX(-50%);gap:7px}
+.fantasy-ui .choice-option{min-height:0;padding:7px 9px;text-align:center;color:#eadbbb;background:linear-gradient(135deg,#4d4a40,#302f29 14%,#25251f 74%,#403b30);border:2px ridge #837354;border-radius:2px;box-shadow:inset 0 0 0 1px #171812,0 3px 8px #000a;text-shadow:0 2px 2px #000}
+.fantasy-ui .choice-option b{font-size:clamp(13px,1vw,16px);color:#c9b88f;letter-spacing:.06em}.fantasy-ui .choice-option span{font-size:clamp(16px,1.35vw,21px);color:#f2dfb6;margin:2px 0}.fantasy-ui .choice-option small{font-family:system-ui,sans-serif;font-size:clamp(11px,.9vw,14px);font-weight:600;color:#c4b69a}
+.fantasy-ui .choice-option.red{border-color:#a44c3c}.fantasy-ui .choice-option.blue{border-color:#638ba2}.fantasy-ui .choice-option.purple{border-color:#8b6b9f}.fantasy-ui .choice-option.shield{border-color:#7d8664}
+.fantasy-ui .choice-option.selected{border-color:#e5c579;box-shadow:inset 0 0 0 1px #e6c06a,0 3px 9px #000b;background:linear-gradient(135deg,#756344,#413827 20%,#29271d 85%,#6a5735)}
+.fantasy-ui .choice-locked{top:155px;border:1px solid #967d50;border-radius:0;background:#221e16eb;color:#f1d49b;font-size:15px;padding:5px 14px}
+.fantasy-ui .lane-enemies{top:260px;left:15px;gap:3px}.fantasy-ui .lane-enemies span{padding:4px 7px;background:#1a1b18d9;border-left:2px solid currentColor;font-family:system-ui,sans-serif;font-size:12px}
+.fantasy-ui .lane-message{bottom:20%;font-size:clamp(18px,2vw,30px);color:#f2dfb5;text-shadow:0 2px 4px #000,1px 1px 1px #000}
+.fantasy-ui .lane-help{left:15px;bottom:15px;padding:8px 12px;border:2px ridge #85734e;background:linear-gradient(#3d3a31,#23231d);color:#edddba;font-size:15px;box-shadow:0 3px 8px #0009}.fantasy-ui .lane-help small{color:#bfb399;font-family:system-ui,sans-serif;font-size:11px;margin-top:3px}
+.fantasy-ui .lane-marker{color:#d1c09b}.fantasy-ui .lane-marker.active{color:#f6d68d;text-shadow:0 2px 4px #000;font-size:20px}
+.fantasy-ui .monster-hp{background:#1b1a14;border:2px ridge #9e8758;border-radius:0;height:11px}.fantasy-ui .monster-hp i{background:linear-gradient(#c45a3d,#7d261f)}
+.fantasy-ui .lane-start{background:linear-gradient(90deg,#131510ed 0%,#1c1b16d9 35%,#11140d88 66%,transparent 100%)}
+.fantasy-ui .lane-start>div{padding:28px 34px;background:linear-gradient(135deg,#504a3bd9,#211f1bcf);border:4px ridge #a58b59;box-shadow:inset 0 0 0 2px #1c1a14,0 10px 30px #0009}
+.fantasy-ui .lane-start h1{font-size:clamp(34px,4vw,56px);color:#f2dda7;text-shadow:0 3px 3px #000;letter-spacing:.06em}.fantasy-ui .lane-start p{font-size:17px;color:#ddd0b2}.fantasy-ui .lane-start small,.fantasy-ui .lane-start .lane-note{color:#bdaa7e}.fantasy-ui .lane-start button{font-size:20px;color:#f9e5b2;padding:10px 30px;border:3px ridge #b99a5a;background:linear-gradient(#745b31,#382c1b 50%,#241c12)}
+.fantasy-ui .game-feedback{text-shadow:0 3px 3px #000,1px 1px #000}.fantasy-ui .game-feedback b{font-size:clamp(34px,4vw,58px)}.fantasy-ui .game-feedback.clear{color:#f0d28b}
+@media(max-width:1100px){.fantasy-ui .lane-header{align-items:flex-start}.fantasy-ui .lane-header nav a,.fantasy-ui .lane-header nav button{font-size:11px;padding:4px}.fantasy-ui .lane-stats{top:100px;width:170px}.fantasy-ui .choice-options{top:100px;width:54vw}.fantasy-ui .choice-option{padding:5px}.fantasy-ui .choice-option span{font-size:15px}.fantasy-ui .choice-option small{font-size:10px}.fantasy-ui .gem-panel{width:160px}.fantasy-ui .choice-locked{top:175px}}
+@media(max-height:650px){.fantasy-ui .lane-stats{top:64px;padding:7px}.fantasy-ui .choice-options{top:64px}.fantasy-ui .lane-enemies{top:210px}.fantasy-ui .gem-panel{bottom:8px;padding:8px}.fantasy-ui .lane-help{bottom:8px}.fantasy-ui .lane-start>div{padding:15px 22px}.fantasy-ui .lane-start h1{font-size:32px}}
+/* Give the inventory and its gem slots more room on the battle HUD. */
+.fantasy-ui .gem-panel{width:240px;padding:15px 16px}
+.fantasy-ui .gem-grid{gap:6px;margin:11px 0}
+.fantasy-ui .gem{font-size:30px}
+@media(max-width:1100px){.fantasy-ui .gem-panel{width:200px;padding:12px}}
+@media(max-height:650px){.fantasy-ui .gem-panel{padding:9px 12px}.fantasy-ui .gem-grid{margin:6px 0}.fantasy-ui .gem{font-size:25px}}
+/* Original gem artwork, clipped to its silhouette to hide the baked-in checkerboard. */
+.gem-image{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.gem-image.blue{clip-path:circle(42.5% at 49.5% 50.5%)}
+.gem-image.purple{clip-path:polygon(14% 22.1%,84% 22.1%,89% 25.8%,49.7% 89.1%,11% 25.8%)}
+.gem-image.red{clip-path:polygon(49.8% 4.9%,72% 29.5%,85.5% 50%,49.8% 94.5%,14.5% 50%,28% 29.5%)}
+.gem-flight{width:48px;height:48px}
+/* Layer the supplied artwork in 3D space so each gem has a subtle edge and movement. */
+.fantasy-ui .gem-slot{perspective:220px;overflow:visible}
+.gem-model{position:relative;display:block;width:100%;height:100%;transform-style:preserve-3d;animation:gem-sway 4.8s ease-in-out infinite;will-change:transform}
+.gem-model .gem-image{position:absolute;inset:0;backface-visibility:hidden}
+.gem-model .gem-face{transform:translateZ(3px)}
+.gem-model .depth-middle{transform:translateZ(0);filter:brightness(.58) saturate(1.1)}
+.gem-model .depth-back{transform:translateZ(-3px);filter:brightness(.32) saturate(1.2)}
+.gem-slot:nth-child(3n+2) .gem-model{animation-delay:-1.5s}.gem-slot:nth-child(3n) .gem-model{animation-delay:-3s}
+@keyframes gem-sway{0%,100%{transform:rotateY(-13deg) rotateX(3deg)}50%{transform:rotateY(13deg) rotateX(-3deg)}}
+@media(prefers-reduced-motion:reduce){.gem-model{animation:none}}
