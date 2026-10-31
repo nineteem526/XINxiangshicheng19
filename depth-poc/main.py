@@ -53,7 +53,7 @@ def infer(image_url:str):
 async def frame(request:Request,body:DepthRequest):
     # The listener is loopback-only. The Vite proxy supplies the actual peer address.
     from ipaddress import ip_address
-    peer=request.headers.get('x-forwarded-for','').split(',')[0].strip() or (request.client.host if request.client else '')
+    peer=request.headers.get('x-forwarded-for','').split(',')[-1].strip() or (request.client.host if request.client else '')
     try:
         if not ip_address(peer).is_loopback:return {'ok':False,'error':'仅允许本机请求'}
     except ValueError:return {'ok':False,'error':'无法确认请求来源'}
@@ -61,3 +61,4 @@ async def frame(request:Request,body:DepthRequest):
         async with inference_lock: result=await asyncio.to_thread(infer,body.image)
         return {'ok':True,**result}
     except Exception as exc:return {'ok':False,'error':str(exc)[:200]}
+

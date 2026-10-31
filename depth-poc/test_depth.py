@@ -15,6 +15,8 @@ class DepthServiceTests(unittest.TestCase):
         with TestClient(app) as client:
             remote=client.post('/depth/frame',headers={'x-forwarded-for':'192.168.1.10'},json=payload).json()
             self.assertFalse(remote['ok'])
+            forged=client.post('/depth/frame',headers={'x-forwarded-for':'127.0.0.1, 192.168.1.10'},json=payload).json()
+            self.assertFalse(forged['ok'])
             local=client.post('/depth/frame',headers={'x-forwarded-for':'127.0.0.1'},json=payload).json()
             self.assertTrue(local['ok'],local)
             self.assertGreater(local['inferenceMs'],0)
@@ -23,4 +25,5 @@ class DepthServiceTests(unittest.TestCase):
             self.assertGreater(int(np.ptp(np.asarray(out))),5)
 
 if __name__=='__main__':unittest.main()
+
 
