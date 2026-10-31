@@ -2,13 +2,14 @@ export type Gem='red'|'blue'|'green'|'yellow'|'purple';
 export type Lane=0|1|2;
 export type Monster={id:number;lane:Lane;gem:Gem;progress:number};
 export type RunState={phase:'idle'|'playing'|'win'|'lose';lane:Lane;health:number;remaining:number;clears:number;gems:Gem[];monsters:Monster[];spawnIn:number;serial:number;event:string;hits:number};
-export type RunInput={type:'start'}|{type:'tick';ms:number}|{type:'move';step:-1|1}|{type:'punch'};
+export type RunInput={type:'start'}|{type:'tick';ms:number}|{type:'move';step:-1|1}|{type:'punch'}|{type:'selectLane';lane:Lane};
 export const COLORS:Gem[]=['red','blue','green','yellow','purple'];
 export const names:Record<Gem,string>={red:'红',blue:'蓝',green:'绿',yellow:'黄',purple:'紫'};
 export const goal=5,capacity=8,travelMs=8000,attackFrom=.20;
-export const initialRun=():RunState=>({phase:'idle',lane:1,health:3,remaining:90000,clears:0,gems:['red','blue','green','red','blue'],monsters:[],spawnIn:1000,serial:0,event:'左右闪避切换路线，挥拳击败怪物',hits:0});
+export const initialRun=():RunState=>({phase:'idle',lane:1,health:3,remaining:90000,clears:0,gems:['red','blue','green','red','blue'],monsters:[],spawnIn:1000,serial:0,event:'移动到怪物所在路线，挥拳攻击',hits:0});
 export function runReducer(s:RunState,a:RunInput):RunState{
- if(a.type==='start')return {...initialRun(),phase:'playing'};
+ if(a.type==='start')return {...initialRun(),lane:s.lane,phase:'playing'};
+ if(a.type==='selectLane')return a.lane===s.lane?s:{...s,lane:a.lane,...(s.phase==='playing'?{event:`当前${['左','中','右'][a.lane]}侧路线`}:{})};
  if(s.phase!=='playing')return s;
  if(a.type==='move'){const lane=Math.max(0,Math.min(2,s.lane+a.step)) as Lane;return {...s,lane,event:lane===s.lane?'已经到达最边上的路线':`已切换到${['左','中','右'][lane]}侧`};}
  if(a.type==='punch'){
