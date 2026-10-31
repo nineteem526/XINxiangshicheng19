@@ -5,3 +5,4 @@
 .placement{left:26px;right:auto}.game:has(.placement) .hud,.game:has(.placement) .message{visibility:hidden}
 .person-layer{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}.person-layer.contain{object-fit:contain}.person-layer.mirror{transform:scaleX(-1)}
 .skeleton-layer{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:3}.skeleton-layer.contain{object-fit:contain}.skeleton-layer.mirror{transform:scaleX(-1)}
+.warning.safe{background:#075d55e8;border-color:#73ffe1}.warning-track{height:8px;margin-top:8px;background:#ffffff40}.warning-track i{display:block;height:100%;background:#fff;transition:width .05s linear}
